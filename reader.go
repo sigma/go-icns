@@ -61,12 +61,17 @@ func min(i, j int) int {
 }
 
 func (r *reader) Read(p []byte) (int, error) {
-	n := min(len(*r), len(p))
+	var err error
+	nr := len(*r)
+	n := min(nr, len(p))
+	if n == nr {
+		err = io.EOF
+	}
 	s := r.sub(n)
 	for i := 0; i < n; i++ {
 		p[i] = (*s)[i]
 	}
-	return n, nil
+	return n, err
 }
 
 func readICNS(r reader) (*ICNS, error) {
@@ -81,6 +86,7 @@ func readICNS(r reader) (*ICNS, error) {
 	maxCompat := Oldest
 
 	var assets []*img
+	var unsupportedCodes []uint32
 	for {
 		if len(r) == 0 {
 			break
@@ -91,7 +97,7 @@ func readICNS(r reader) (*ICNS, error) {
 		sub := r.sub(size - 8) // size value includes both uint32 for code and size
 
 		if f, ok := supportedFormats[code]; ok {
-			i, err := f.decode(sub)
+			i, enc, err := f.decode(sub)
 			if err != nil {
 				continue
 			}
@@ -105,16 +111,20 @@ func readICNS(r reader) (*ICNS, error) {
 			}
 
 			assets = append(assets, &img{
-				Image:  i,
-				format: f,
+				Image:   i,
+				format:  f,
+				encoder: enc,
 			})
+		} else {
+			unsupportedCodes = append(unsupportedCodes, code)
 		}
 	}
 
 	return &ICNS{
-		minCompat: minCompat,
-		maxCompat: maxCompat,
-		assets:    assets,
+		minCompat:        minCompat,
+		maxCompat:        maxCompat,
+		assets:           assets,
+		unsupportedCodes: unsupportedCodes,
 	}, nil
 }
 

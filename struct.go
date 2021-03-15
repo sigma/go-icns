@@ -21,6 +21,7 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io"
+	"io/ioutil"
 )
 
 const (
@@ -66,7 +67,7 @@ type format struct {
 	res    Resolution
 	compat Compatibility
 	encode func(io.Writer, image.Image) error
-	decode func(io.Reader) (image.Image, error)
+	decode func(io.Reader) (image.Image, string, error)
 }
 
 const (
@@ -92,15 +93,46 @@ func codeRepr(c uint32) string {
 
 var supportedFormats map[uint32]*format
 
-func jpegOrPngDecode(r io.Reader) (image.Image, error) {
+func jpegOrPngDecode(r io.Reader) (image.Image, string, error) {
 	// we might have to re-read.
-	var buf bytes.Buffer
-	tee := io.TeeReader(r, &buf)
-
-	if img, err := jpeg.Decode(tee); err == nil {
-		return img, nil
+	data, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, "", err
 	}
-	return png.Decode(&buf)
+	reader := bytes.NewReader(data)
+	if img, err := jpeg.Decode(reader); err == nil {
+		return img, "jpeg", nil
+	}
+	reader.Seek(0, io.SeekStart)
+	img, err := png.Decode(reader)
+	if err != nil {
+		return nil, "", err
+	}
+	return img, "png", nil
+}
+
+type lreader struct {
+	r io.Reader
+}
+
+func (l *lreader) Read(p []byte) (int, error) {
+	n, r := l.r.Read(p)
+	return n, r
+}
+
+func logReader(r io.Reader) io.Reader {
+	return &lreader{
+		r,
+	}
+}
+
+type decoder func(io.Reader) (image.Image, error)
+
+func decoderLogger(d decoder) decoder {
+	return func(r io.Reader) (image.Image, error) {
+		lr := logReader(r)
+		return d(lr)
+	}
 }
 
 func init() {
@@ -131,7 +163,7 @@ func init() {
 			// always encode as PNG
 			encode: png.Encode,
 			// these can be either JPEG or PNG
-			decode: png.Decode,
+			decode: jpegOrPngDecode,
 		}
 	}
 
@@ -163,13 +195,15 @@ func init() {
 
 type img struct {
 	image.Image
-	format *format
+	format  *format
+	encoder string
 }
 
 // ICNS encapsulates the Applie Icon Image format specification.
 type ICNS struct {
 	minCompat, maxCompat Compatibility
 	assets               []*img
+	unsupportedCodes     []uint32
 }
 
 // Option is the type for ICNS creation options.
@@ -271,4 +305,16 @@ func (i *ICNS) Add(im image.Image) error {
 	}
 
 	return nil
+}
+
+func (i *ICNS) Info() string {
+	buf := new(bytes.Buffer)
+	fmt.Fprintf(buf, "%d images:\n", len(i.assets)+len(i.unsupportedCodes))
+	for _, a := range i.assets {
+		fmt.Fprintf(buf, "[%s] %s image with resolution %d\n", codeRepr(a.format.code), a.encoder, a.Image.Bounds().Dx())
+	}
+	for _, c := range i.unsupportedCodes {
+		fmt.Fprintf(buf, "[%s] unsupported image format\n", codeRepr(c))
+	}
+	return buf.String()
 }
