@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package icns provides read/write operations for the Apple ICNS file format.
 package icns
 
 import (
@@ -25,8 +26,26 @@ import (
 )
 
 const (
-	magic uint32 = 0x69636e73
+	magic uint32 = ('i'<<24 | 'c'<<16 | 'n'<<8 | 's')
+	ic07  uint32 = ('i'<<24 | 'c'<<16 | '0'<<8 | '7')
+	ic08  uint32 = ('i'<<24 | 'c'<<16 | '0'<<8 | '8')
+	ic09  uint32 = ('i'<<24 | 'c'<<16 | '0'<<8 | '9')
+	ic10  uint32 = ('i'<<24 | 'c'<<16 | '1'<<8 | '0')
+	ic11  uint32 = ('i'<<24 | 'c'<<16 | '1'<<8 | '1')
+	ic12  uint32 = ('i'<<24 | 'c'<<16 | '1'<<8 | '2')
+	ic13  uint32 = ('i'<<24 | 'c'<<16 | '1'<<8 | '3')
+	ic14  uint32 = ('i'<<24 | 'c'<<16 | '1'<<8 | '4')
 )
+
+func codeRepr(c uint32) string {
+	r := []rune{
+		rune(c >> 24 & 0xff),
+		rune(c >> 16 & 0xff),
+		rune(c >> 8 & 0xff),
+		rune(c & 0xff),
+	}
+	return string(r)
+}
 
 // Resolution represents the supported resolutions in pixels.
 type Resolution uint
@@ -68,27 +87,6 @@ type format struct {
 	compat Compatibility
 	encode func(io.Writer, image.Image) error
 	decode func(io.Reader) (image.Image, string, error)
-}
-
-const (
-	ic07 uint32 = ('i'<<24 | 'c'<<16 | '0'<<8 | '7')
-	ic08 uint32 = ('i'<<24 | 'c'<<16 | '0'<<8 | '8')
-	ic09 uint32 = ('i'<<24 | 'c'<<16 | '0'<<8 | '9')
-	ic10 uint32 = ('i'<<24 | 'c'<<16 | '1'<<8 | '0')
-	ic11 uint32 = ('i'<<24 | 'c'<<16 | '1'<<8 | '1')
-	ic12 uint32 = ('i'<<24 | 'c'<<16 | '1'<<8 | '2')
-	ic13 uint32 = ('i'<<24 | 'c'<<16 | '1'<<8 | '3')
-	ic14 uint32 = ('i'<<24 | 'c'<<16 | '1'<<8 | '4')
-)
-
-func codeRepr(c uint32) string {
-	r := []rune{
-		rune(c >> 24 & 0xff),
-		rune(c >> 16 & 0xff),
-		rune(c >> 8 & 0xff),
-		rune(c & 0xff),
-	}
-	return string(r)
 }
 
 var supportedFormats map[uint32]*format
