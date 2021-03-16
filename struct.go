@@ -306,6 +306,7 @@ func (i *ICNS) Add(im image.Image) error {
 	return nil
 }
 
+// Info provides information about the ICNS
 func (i *ICNS) Info() string {
 	buf := new(bytes.Buffer)
 	fmt.Fprintf(buf, "%d images:\n", len(i.assets)+len(i.unsupportedCodes))
