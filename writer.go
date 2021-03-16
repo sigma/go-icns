@@ -22,30 +22,13 @@ import (
 
 type writer []byte
 
-func (w *writer) uint8(v uint8) {
-	(*w)[0] = v
-	*w = (*w)[1:]
-}
-
-func (w *writer) uint16(v uint16) {
-	binary.BigEndian.PutUint16(*w, v)
-	*w = (*w)[2:]
-}
-
 func (w *writer) uint32(v uint32) {
 	binary.BigEndian.PutUint32(*w, v)
 	*w = (*w)[4:]
 }
 
-func (w *writer) uint64(v uint64) {
-	binary.BigEndian.PutUint64(*w, v)
-	*w = (*w)[8:]
-}
-
-func (w *writer) sub(body []byte) {
-	for i, b := range body {
-		(*w)[i] = b
-	}
+func (w *writer) section(body []byte) {
+	copy((*w), body)
 	*w = (*w)[len(body):]
 }
 
@@ -74,7 +57,7 @@ func Encode(w io.Writer, i *ICNS) error {
 	for idx := range buffers {
 		wd.uint32(types[idx])
 		wd.uint32(sizes[idx])
-		wd.sub(buffers[idx].Bytes())
+		wd.section(buffers[idx].Bytes())
 	}
 
 	_, err := w.Write(data)

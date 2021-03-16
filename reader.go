@@ -23,34 +23,16 @@ import (
 
 type reader []byte
 
-func (r *reader) uint8() uint8 {
-	v := (*r)[0]
-	*r = (*r)[1:]
-	return v
-}
-
-func (r *reader) uint16() uint16 {
-	v := binary.BigEndian.Uint16(*r)
-	*r = (*r)[2:]
-	return v
-}
-
 func (r *reader) uint32() uint32 {
 	v := binary.BigEndian.Uint32(*r)
 	*r = (*r)[4:]
 	return v
 }
 
-func (r *reader) uint64() uint64 {
-	v := binary.BigEndian.Uint64(*r)
-	*r = (*r)[8:]
-	return v
-}
-
-func (r *reader) sub(n int) *reader {
-	b2 := (*r)[:n]
+func (r *reader) section(n int) *reader {
+	r2 := (*r)[:n]
 	*r = (*r)[n:]
-	return &b2
+	return &r2
 }
 
 func min(i, j int) int {
@@ -67,7 +49,7 @@ func (r *reader) Read(p []byte) (int, error) {
 	if n == nr {
 		err = io.EOF
 	}
-	s := r.sub(n)
+	s := r.section(n)
 	for i := 0; i < n; i++ {
 		p[i] = (*s)[i]
 	}
@@ -94,7 +76,7 @@ func readICNS(r reader) (*ICNS, error) {
 
 		code := r.uint32()
 		size := int(r.uint32())
-		sub := r.sub(size - 8) // size value includes both uint32 for code and size
+		sub := r.section(size - 8) // size value includes both uint32 for code and size
 
 		if f, ok := supportedFormats[code]; ok {
 			i, enc, err := f.decode(sub)
