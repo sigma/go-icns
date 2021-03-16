@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package rle implements a simple RLE encoder, as used in ICNS format.
 package rle
 
 type byteRec struct {
@@ -19,6 +20,7 @@ type byteRec struct {
 	n int
 }
 
+// Encode RLE-encodes the provided bytes.
 func Encode(b []byte) []byte {
 	var res []byte
 
@@ -42,7 +44,7 @@ func Encode(b []byte) []byte {
 				n: 1,
 			}
 		} else {
-			cur.n += 1
+			cur.n++
 		}
 	}
 	records = append(records, cur)
@@ -85,6 +87,7 @@ func Encode(b []byte) []byte {
 	return res
 }
 
+// Decode RLE-decodes the provided bytes.
 func Decode(p []byte) []byte {
 	var res []byte
 	pos := 0
