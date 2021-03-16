@@ -17,6 +17,8 @@ package icns
 import (
 	"encoding/binary"
 	"fmt"
+	"image"
+	"image/draw"
 	"io"
 	"io/ioutil"
 )
@@ -68,6 +70,8 @@ func readICNS(r reader) (*ICNS, error) {
 	maxCompat := Oldest
 
 	var assets []*img
+	masks := make(map[uint32]image.Image)
+
 	var unsupportedCodes []uint32
 	for {
 		if len(r) == 0 {
@@ -78,8 +82,8 @@ func readICNS(r reader) (*ICNS, error) {
 		size := int(r.uint32())
 		sub := r.section(size - 8) // size value includes both uint32 for code and size
 
-		if f, ok := supportedFormats[code]; ok {
-			i, enc, err := f.decode(sub)
+		if f, ok := supportedMaskFormats[code]; ok {
+			i, _, err := f.decode(sub, f.res)
 			if err != nil {
 				continue
 			}
@@ -92,14 +96,45 @@ func readICNS(r reader) (*ICNS, error) {
 				maxCompat = f.compat
 			}
 
+			masks[code] = i
+
+			continue
+		}
+
+		if f, ok := supportedImageFormats[code]; ok {
+			i, enc, err := f.decode(sub, f.res)
+			if err != nil {
+				continue
+			}
+
+			if f.compat < minCompat {
+				minCompat = f.compat
+			}
+
+			if f.compat > maxCompat {
+				maxCompat = f.compat
+			}
+
+			// TODO: don't assume the mask is parsed first
+			if m := masks[f.combineCode]; m != nil {
+				r := image.Rect(0, 0, int(f.res), int(f.res))
+
+				c := image.NewRGBA(r)
+
+				draw.DrawMask(c, r, i, image.Pt(0, 0), m, image.Pt(0, 0), draw.Over)
+				i = c
+			}
+
 			assets = append(assets, &img{
 				Image:   i,
 				format:  f,
 				encoder: enc,
 			})
-		} else {
-			unsupportedCodes = append(unsupportedCodes, code)
+
+			continue
 		}
+
+		unsupportedCodes = append(unsupportedCodes, code)
 	}
 
 	return &ICNS{

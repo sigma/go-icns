@@ -13,20 +13,27 @@
 // limitations under the License.
 
 // Package icns provides read/write operations for the Apple ICNS file format.
+// It currently only supports a subset of the specification, covering JPEG and PNG data types.
 package icns
 
 import (
 	"bytes"
 	"fmt"
 	"image"
-	"image/jpeg"
 	"image/png"
 	"io"
-	"io/ioutil"
 )
 
 const (
 	magic uint32 = ('i'<<24 | 'c'<<16 | 'n'<<8 | 's')
+	is32  uint32 = ('i'<<24 | 's'<<16 | '3'<<8 | '2')
+	s8mk  uint32 = ('s'<<24 | '8'<<16 | 'm'<<8 | 'k')
+	il32  uint32 = ('i'<<24 | 'l'<<16 | '3'<<8 | '2')
+	l8mk  uint32 = ('l'<<24 | '8'<<16 | 'm'<<8 | 'k')
+	ih32  uint32 = ('i'<<24 | 'h'<<16 | '3'<<8 | '2')
+	h8mk  uint32 = ('h'<<24 | '8'<<16 | 'm'<<8 | 'k')
+	it32  uint32 = ('i'<<24 | 't'<<16 | '3'<<8 | '2')
+	t8mk  uint32 = ('t'<<24 | '8'<<16 | 'm'<<8 | 'k')
 	ic07  uint32 = ('i'<<24 | 'c'<<16 | '0'<<8 | '7')
 	ic08  uint32 = ('i'<<24 | 'c'<<16 | '0'<<8 | '8')
 	ic09  uint32 = ('i'<<24 | 'c'<<16 | '0'<<8 | '9')
@@ -54,6 +61,7 @@ type Resolution uint
 const (
 	Pixel16   Resolution = 16
 	Pixel32   Resolution = 32
+	Pixel48   Resolution = 48
 	Pixel64   Resolution = 64
 	Pixel128  Resolution = 128
 	Pixel256  Resolution = 256
@@ -82,55 +90,72 @@ const (
 )
 
 type format struct {
-	code   uint32
-	res    Resolution
-	compat Compatibility
-	encode func(io.Writer, image.Image) error
-	decode func(io.Reader) (image.Image, string, error)
+	code        uint32
+	combineCode uint32
+	res         Resolution
+	compat      Compatibility
+	encode      func(io.Writer, image.Image) error
+	decode      func(io.Reader, Resolution) (image.Image, string, error)
 }
 
-var supportedFormats map[uint32]*format
-
-func jpegOrPngDecode(r io.Reader) (image.Image, string, error) {
-	// we might have to re-read.
-	data, err := ioutil.ReadAll(r)
-	if err != nil {
-		return nil, "", err
-	}
-	reader := bytes.NewReader(data)
-	if img, err := jpeg.Decode(reader); err == nil {
-		return img, "jpeg", nil
-	}
-	_, _ = reader.Seek(0, io.SeekStart)
-	img, err := png.Decode(reader)
-	if err != nil {
-		return nil, "", err
-	}
-	return img, "png", nil
-}
+var (
+	supportedImageFormats map[uint32]*format
+	supportedMaskFormats  map[uint32]*format
+)
 
 func init() {
-	supportedFormats = make(map[uint32]*format)
+	supportedImageFormats = make(map[uint32]*format)
+	supportedMaskFormats = make(map[uint32]*format)
 
-	// TODO: support more legacy formats.
-	// is32, s8mk, il32 and l8mk are still in use for example.
+	legacyFormats := []struct {
+		code   uint32
+		mask   uint32
+		res    Resolution
+		compat Compatibility
+	}{
+		{is32, s8mk, Pixel16, Allegro},
+		{il32, l8mk, Pixel32, Allegro},
+		{ih32, h8mk, Pixel16, Allegro},
+		{it32, t8mk, Pixel32, Allegro},
+	}
+
+	for _, f := range legacyFormats {
+		supportedImageFormats[f.code] = &format{
+			code:        f.code,
+			combineCode: f.mask,
+			res:         f.res,
+			compat:      f.compat,
+			encode:      nil,
+			decode:      decodePack,
+		}
+
+		supportedMaskFormats[f.mask] = &format{
+			code:        f.mask,
+			combineCode: f.code,
+			res:         f.res,
+			compat:      f.compat,
+			encode:      nil,
+			decode:      decodeAlpha,
+		}
+	}
+
 	modernFormats := []struct {
 		code   uint32
 		res    Resolution
 		compat Compatibility
 	}{
-		{ic07, 128, Lion},
-		{ic08, 256, Leopard},
-		{ic09, 512, Leopard},
-		{ic10, 1024, Lion},
-		{ic11, 32, MountainLion},
-		{ic12, 64, MountainLion},
-		{ic13, 256, MountainLion},
-		{ic14, 512, MountainLion},
+		{ic07, Pixel128, Lion},
+		{ic08, Pixel256, Leopard},
+		{ic09, Pixel512, Leopard},
+		{ic10, Pixel1024, Lion},
+		{ic11, Pixel32, MountainLion},
+		{ic12, Pixel64, MountainLion},
+		{ic13, Pixel256, MountainLion},
+		{ic14, Pixel512, MountainLion},
 	}
 
 	for _, f := range modernFormats {
-		supportedFormats[f.code] = &format{
+		supportedImageFormats[f.code] = &format{
 			code:   f.code,
 			res:    f.res,
 			compat: f.compat,
@@ -249,7 +274,7 @@ func (i *ICNS) Add(im image.Image) error {
 	}
 
 	var supported bool
-	for _, f := range supportedFormats {
+	for _, f := range supportedImageFormats {
 		if f.compat < i.minCompat || f.compat > i.maxCompat {
 			continue
 		}
