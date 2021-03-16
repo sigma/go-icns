@@ -76,17 +76,17 @@ func Encode(b []byte) []byte {
 
 	for _, r := range records {
 		if r.n < 3 {
-			if n+r.n <= 128 { // so the max segment length is 127 (0x7f)
+			if n+r.n <= 128 { // so the max segment length is 0x7f
 				n += r.n
 			} else {
-				flush()
+				flush() // the tmp buffer was full
 				n = r.n
 			}
 			for i := 0; i < r.n; i++ {
 				tmp = append(tmp, r.b)
 			}
 		} else {
-			flush()
+			flush() // write the tmp buffer before entering a repetition
 			for r.n > 0 {
 				// because we only compress sequences of 3+ characters
 				// we encode repetitions of 3 to 130 as 0x80 to 0xff
@@ -96,7 +96,7 @@ func Encode(b []byte) []byte {
 			}
 		}
 	}
-	flush()
+	flush() // flush whatever we might have left in tmp
 	return res
 }
 

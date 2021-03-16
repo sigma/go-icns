@@ -21,7 +21,7 @@ import (
 	"github.com/sigma/go-icns/internal/rle"
 )
 
-func TestRLE(t *testing.T) {
+func TestStableRLE(t *testing.T) {
 	data := []struct {
 		name     string
 		dec, enc []byte
@@ -105,6 +105,42 @@ func TestRLE(t *testing.T) {
 
 			encoded := rle.Encode(tt.dec)
 			if diff := cmp.Diff(tt.enc, encoded); diff != "" {
+				t.Errorf("Encode() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestUnstableRLE(t *testing.T) {
+	data := []struct {
+		name       string
+		enc1, enc2 []byte
+	}{
+		{
+			"small",
+			[]byte{
+				0x02, 0x01, 0x02, 0x02, // 1, 2, 2
+				0x80, 0x03, // 3* 3
+				0x80, 0x04, // 3* 4
+				0x02, 0x04, 0x05, 0x05, // 4, 5, 5
+				0x80, 0x05, // 3* 5
+			},
+			[]byte{
+				0x02, 0x01, 0x02, 0x02, // 1, 2, 2
+				0x80, 0x03, // 3* 3
+				0x81, 0x04, // 4* 4
+				0x82, 0x05, // 5* 5
+			},
+		},
+	}
+
+	for _, tt := range data {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			decoded := rle.Decode(tt.enc1)
+			encoded := rle.Encode(decoded)
+			if diff := cmp.Diff(tt.enc2, encoded); diff != "" {
 				t.Errorf("Encode() mismatch (-want +got):\n%s", diff)
 			}
 		})
