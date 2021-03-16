@@ -13,6 +13,18 @@
 // limitations under the License.
 
 // Package rle implements a simple RLE encoder, as used in ICNS format.
+//
+// The encoded format can be seen as a sequence of segments of the following form:
+// - 1 control byte N
+// - a number of data bytes
+// If the control byte value is N < 0x80, then the decoded data contains the
+//   N+1 encoded bytes as is
+// If the control byte value is N >= 0x80, then the decoded data contains
+//   N-0x80+3 repetitions of the following encoded byte
+// In particular, this means that the second case can cover only repetitions of
+//   3 or more bytes.
+// Similarly, a "raw" sequence can contain only 128 (0x7f+1) bytes, and needs to be split
+// if a longer non-repetitive pattern is seen.
 package rle
 
 type byteRec struct {
@@ -64,7 +76,7 @@ func Encode(b []byte) []byte {
 
 	for _, r := range records {
 		if r.n < 3 {
-			if n+r.n < 128 { // so the max segment length is 127
+			if n+r.n <= 128 { // so the max segment length is 127 (0x7f)
 				n += r.n
 			} else {
 				flush()
@@ -77,13 +89,14 @@ func Encode(b []byte) []byte {
 			flush()
 			for r.n > 0 {
 				// because we only compress sequences of 3+ characters
-				// a repetition of 130 is encoded as 127
+				// we encode repetitions of 3 to 130 as 0x80 to 0xff
 				n := min(r.n, 130)
 				res = append(res, byte(0x80+n-3), r.b)
 				r.n -= n
 			}
 		}
 	}
+	flush()
 	return res
 }
 
