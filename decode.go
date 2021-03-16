@@ -21,6 +21,8 @@ import (
 	"image/png"
 	"io"
 	"io/ioutil"
+
+	"github.com/sigma/go-icns/internal/rle"
 )
 
 // modern icon support embedding either JPEG or PNG
@@ -52,7 +54,7 @@ func decodePack(r io.Reader, res Resolution) (image.Image, string, error) {
 		return nil, "", err
 	}
 
-	flat := rleUnpack(body)
+	flat := rle.Decode(body)
 
 	size := int(res * res)
 	pixels := make([]byte, 4*size)
@@ -70,32 +72,6 @@ func decodePack(r io.Reader, res Resolution) (image.Image, string, error) {
 		Rect:   rect,
 	}
 	return img, "icon", nil
-}
-
-func rleUnpack(p []byte) []byte {
-	var res []byte
-	pos := 0
-
-	for {
-		if pos >= len(p) {
-			break
-		}
-
-		b := p[pos]
-		if b < 0x80 {
-			n := int(b) + 1
-			res = append(res, p[pos+1:pos+1+n]...)
-			pos += 1 + n
-		} else {
-			x := p[pos+1]
-			n := int(b-0x80) + 3
-			for i := 0; i < n; i++ {
-				res = append(res, x)
-			}
-			pos += 2
-		}
-	}
-	return res
 }
 
 // the separate mask file contains just the alpha channel
