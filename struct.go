@@ -103,36 +103,12 @@ func jpegOrPngDecode(r io.Reader) (image.Image, string, error) {
 	if img, err := jpeg.Decode(reader); err == nil {
 		return img, "jpeg", nil
 	}
-	reader.Seek(0, io.SeekStart)
+	_, _ = reader.Seek(0, io.SeekStart)
 	img, err := png.Decode(reader)
 	if err != nil {
 		return nil, "", err
 	}
 	return img, "png", nil
-}
-
-type lreader struct {
-	r io.Reader
-}
-
-func (l *lreader) Read(p []byte) (int, error) {
-	n, r := l.r.Read(p)
-	return n, r
-}
-
-func logReader(r io.Reader) io.Reader {
-	return &lreader{
-		r,
-	}
-}
-
-type decoder func(io.Reader) (image.Image, error)
-
-func decoderLogger(d decoder) decoder {
-	return func(r io.Reader) (image.Image, error) {
-		lr := logReader(r)
-		return d(lr)
-	}
 }
 
 func init() {
