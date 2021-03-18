@@ -34,6 +34,9 @@ const (
 	h8mk  uint32 = ('h'<<24 | '8'<<16 | 'm'<<8 | 'k')
 	it32  uint32 = ('i'<<24 | 't'<<16 | '3'<<8 | '2')
 	t8mk  uint32 = ('t'<<24 | '8'<<16 | 'm'<<8 | 'k')
+	icp4  uint32 = ('i'<<24 | 'c'<<16 | 'p'<<8 | '4')
+	icp5  uint32 = ('i'<<24 | 'c'<<16 | 'p'<<8 | '5')
+	icp6  uint32 = ('i'<<24 | 'c'<<16 | 'p'<<8 | '6')
 	ic07  uint32 = ('i'<<24 | 'c'<<16 | '0'<<8 | '7')
 	ic08  uint32 = ('i'<<24 | 'c'<<16 | '0'<<8 | '8')
 	ic09  uint32 = ('i'<<24 | 'c'<<16 | '0'<<8 | '9')
@@ -144,6 +147,9 @@ func init() {
 		res    Resolution
 		compat Compatibility
 	}{
+		{icp4, Pixel16, Lion},
+		{icp5, Pixel32, Lion},
+		{icp6, Pixel64, Lion},
 		{ic07, Pixel128, Lion},
 		{ic08, Pixel256, Leopard},
 		{ic09, Pixel512, Leopard},
