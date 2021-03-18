@@ -76,7 +76,7 @@ func decodePack(r io.Reader, res Resolution) (image.Image, string, error) {
 
 // the separate mask file contains just the alpha channel
 // is it optional?
-func decodeAlpha(r io.Reader, res Resolution) (image.Image, string, error) {
+func decodeMask(r io.Reader, res Resolution) (image.Image, string, error) {
 	body, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, "", err

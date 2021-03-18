@@ -125,7 +125,7 @@ func init() {
 			combineCode: f.mask,
 			res:         f.res,
 			compat:      f.compat,
-			encode:      nil,
+			encode:      encodePack,
 			decode:      decodePack,
 		}
 
@@ -134,8 +134,8 @@ func init() {
 			combineCode: f.code,
 			res:         f.res,
 			compat:      f.compat,
-			encode:      nil,
-			decode:      decodeAlpha,
+			encode:      encodeMask,
+			decode:      decodeMask,
 		}
 	}
 

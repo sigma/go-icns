@@ -44,8 +44,27 @@ func Encode(w io.Writer, i *ICNS) error {
 		if encoder == nil {
 			continue
 		}
+
+		// encode mask first
+		if a.format.combineCode != 0 {
+			// the encoders expect an NRGBA instance
+			a.Image = toNRGBA(a.Image)
+
+			// encode alpha channel as separated mask
+			mformat := supportedMaskFormats[a.format.combineCode]
+			buf := new(bytes.Buffer)
+			if err := mformat.encode(buf, a.Image); err != nil {
+				return err
+			}
+			size := uint32(buf.Len()) + 8
+			buffers = append(buffers, buf)
+			types = append(types, mformat.code)
+			sizes = append(sizes, size)
+			totalSize += size
+		}
+
 		buf := new(bytes.Buffer)
-		if err := a.format.encode(buf, a.Image); err != nil {
+		if err := encoder(buf, a.Image); err != nil {
 			return err
 		}
 		size := uint32(buf.Len()) + 8
