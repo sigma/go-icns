@@ -34,19 +34,25 @@ func (w *writer) section(body []byte) {
 
 // Encode writes a .icns file to the provided writer.
 func Encode(w io.Writer, i *ICNS) error {
-	n := len(i.assets)
-	buffers := make([]bytes.Buffer, n)
-	sizes := make([]uint32, n)
-	types := make([]uint32, n)
+	buffers := make([]*bytes.Buffer, 0)
+	sizes := make([]uint32, 0)
+	types := make([]uint32, 0)
 	var totalSize uint32 = 8
 
-	for idx, a := range i.assets {
-		if err := a.format.encode(&buffers[idx], a.Image); err != nil {
+	for _, a := range i.assets {
+		encoder := a.format.encode
+		if encoder == nil {
+			continue
+		}
+		buf := new(bytes.Buffer)
+		if err := a.format.encode(buf, a.Image); err != nil {
 			return err
 		}
-		types[idx] = a.format.code
-		sizes[idx] = uint32(buffers[idx].Len()) + 8
-		totalSize += sizes[idx]
+		size := uint32(buf.Len()) + 8
+		buffers = append(buffers, buf)
+		types = append(types, a.format.code)
+		sizes = append(sizes, size)
+		totalSize += size
 	}
 
 	data := make([]byte, totalSize)
