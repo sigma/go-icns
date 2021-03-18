@@ -47,6 +47,9 @@ func Encode(b []byte) []byte {
 		n: 1,
 	}
 
+	// for simplicity, operate in 2 phases.
+	// Phase 1: don't worry about invididual segment max lengths
+	// and just count successive identical bytes.
 	for i := 1; i < len(b); i++ {
 		c := b[i]
 		if c != cur.b {
@@ -74,6 +77,8 @@ func Encode(b []byte) []byte {
 		n = 0
 	}
 
+	// Phase 2: accumulate raw bytes, and flush as soon as a repetition occurs.
+	// Also split sequences to not exceed max counts.
 	for _, r := range records {
 		if r.n < 3 {
 			if n+r.n <= 128 { // so the max segment length is 0x7f
