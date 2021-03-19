@@ -90,3 +90,29 @@ func decodeMask(r io.Reader, res Resolution) (image.Image, string, error) {
 	}
 	return img, "mask", nil
 }
+
+func decodeARGB(r io.Reader, res Resolution) (image.Image, string, error) {
+	body, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, "", err
+	}
+
+	flat := rle.Decode(body[4:]) // skip "ARGB"
+
+	size := int(res * res)
+	pixels := make([]byte, 4*size)
+	for i := 0; i < size; i++ {
+		pixels[i*4] = flat[size+i]
+		pixels[i*4+1] = flat[2*size+i]
+		pixels[i*4+2] = flat[3*size+i]
+		pixels[i*4+3] = flat[i]
+	}
+
+	rect := image.Rect(0, 0, int(res), int(res))
+	img := &image.NRGBA{
+		Pix:    pixels,
+		Stride: 4 * rect.Dx(),
+		Rect:   rect,
+	}
+	return img, "argb", nil
+}

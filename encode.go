@@ -58,3 +58,15 @@ func encodeMask(w io.Writer, img image.Image) error {
 	}
 	return encodeMask(w, toNRGBA(img))
 }
+
+func encodeARGB(w io.Writer, img image.Image) error {
+	if nrgba, ok := img.(*image.NRGBA); ok {
+		w.Write([]byte("ARGB"))
+		w.Write(rle.Encode(nrgbaChannel(nrgba, 3)))
+		for i := 0; i < 3; i++ {
+			w.Write(rle.Encode(nrgbaChannel(nrgba, i)))
+		}
+		return nil
+	}
+	return encodeARGB(w, toNRGBA(img))
+}

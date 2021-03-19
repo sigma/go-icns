@@ -37,6 +37,8 @@ const (
 	icp4  uint32 = ('i'<<24 | 'c'<<16 | 'p'<<8 | '4')
 	icp5  uint32 = ('i'<<24 | 'c'<<16 | 'p'<<8 | '5')
 	icp6  uint32 = ('i'<<24 | 'c'<<16 | 'p'<<8 | '6')
+	ic04  uint32 = ('i'<<24 | 'c'<<16 | '0'<<8 | '4')
+	ic05  uint32 = ('i'<<24 | 'c'<<16 | '0'<<8 | '5')
 	ic07  uint32 = ('i'<<24 | 'c'<<16 | '0'<<8 | '7')
 	ic08  uint32 = ('i'<<24 | 'c'<<16 | '0'<<8 | '8')
 	ic09  uint32 = ('i'<<24 | 'c'<<16 | '0'<<8 | '9')
@@ -111,15 +113,14 @@ func init() {
 	supportedMaskFormats = make(map[uint32]*format)
 
 	legacyFormats := []struct {
-		code   uint32
-		mask   uint32
-		res    Resolution
-		compat Compatibility
+		code uint32
+		mask uint32
+		res  Resolution
 	}{
-		{is32, s8mk, Pixel16, Allegro},
-		{il32, l8mk, Pixel32, Allegro},
-		{ih32, h8mk, Pixel16, Allegro},
-		{it32, t8mk, Pixel32, Allegro},
+		{is32, s8mk, Pixel16},
+		{il32, l8mk, Pixel32},
+		{ih32, h8mk, Pixel16},
+		{it32, t8mk, Pixel32},
 	}
 
 	for _, f := range legacyFormats {
@@ -127,7 +128,7 @@ func init() {
 			code:        f.code,
 			combineCode: f.mask,
 			res:         f.res,
-			compat:      f.compat,
+			compat:      Allegro,
 			encode:      encodePack,
 			decode:      decodePack,
 		}
@@ -136,9 +137,27 @@ func init() {
 			code:        f.mask,
 			combineCode: f.code,
 			res:         f.res,
-			compat:      f.compat,
+			compat:      Allegro,
 			encode:      encodeMask,
 			decode:      decodeMask,
+		}
+	}
+
+	argbFormats := []struct {
+		code uint32
+		res  Resolution
+	}{
+		{ic04, Pixel16},
+		{ic05, Pixel32},
+	}
+
+	for _, f := range argbFormats {
+		supportedImageFormats[f.code] = &format{
+			code:   f.code,
+			res:    f.res,
+			compat: Cheetah, // not quite sure
+			encode: encodeARGB,
+			decode: decodeARGB,
 		}
 	}
 
