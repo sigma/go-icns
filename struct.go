@@ -20,8 +20,9 @@ import (
 	"bytes"
 	"fmt"
 	"image"
-	"image/png"
 	"io"
+
+	"github.com/sigma/go-icns/internal/codec"
 )
 
 const (
@@ -60,7 +61,7 @@ func codeRepr(c uint32) string {
 }
 
 // Resolution represents the supported resolutions in pixels.
-type Resolution uint
+type Resolution = codec.Resolution
 
 // All supported resolutions
 const (
@@ -99,8 +100,7 @@ type format struct {
 	combineCode uint32
 	res         Resolution
 	compat      Compatibility
-	encode      func(io.Writer, image.Image) error
-	decode      func(io.Reader, Resolution) (image.Image, string, error)
+	codec       codec.Codec
 }
 
 var (
@@ -129,8 +129,7 @@ func init() {
 			combineCode: f.mask,
 			res:         f.res,
 			compat:      Allegro,
-			encode:      encodePack,
-			decode:      decodePack,
+			codec:       &codec.PackCodec{},
 		}
 
 		supportedMaskFormats[f.mask] = &format{
@@ -138,8 +137,7 @@ func init() {
 			combineCode: f.code,
 			res:         f.res,
 			compat:      Allegro,
-			encode:      encodeMask,
-			decode:      decodeMask,
+			codec:       &codec.MaskCodec{},
 		}
 	}
 
@@ -156,8 +154,7 @@ func init() {
 			code:   f.code,
 			res:    f.res,
 			compat: Cheetah, // not quite sure
-			encode: encodeARGB,
-			decode: decodeARGB,
+			codec:  &codec.ARGBCodec{},
 		}
 	}
 
@@ -184,10 +181,7 @@ func init() {
 			code:   f.code,
 			res:    f.res,
 			compat: f.compat,
-			// always encode as PNG
-			encode: png.Encode,
-			// these can be either JPEG or PNG
-			decode: jpegOrPngDecode,
+			codec:  &codec.ImageCodec{},
 		}
 	}
 

@@ -18,6 +18,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
+
+	"github.com/sigma/go-icns/internal/codec"
 )
 
 type writer []byte
@@ -40,7 +42,7 @@ func Encode(w io.Writer, i *ICNS) error {
 	var totalSize uint32 = 8
 
 	for _, a := range i.assets {
-		encoder := a.format.encode
+		encoder := a.format.codec.Encode
 		if encoder == nil {
 			continue
 		}
@@ -48,12 +50,12 @@ func Encode(w io.Writer, i *ICNS) error {
 		// encode mask first
 		if a.format.combineCode != 0 {
 			// the encoders expect an NRGBA instance
-			a.Image = toNRGBA(a.Image)
+			a.Image = codec.Img2NRGBA(a.Image)
 
 			// encode alpha channel as separated mask
 			mformat := supportedMaskFormats[a.format.combineCode]
 			buf := new(bytes.Buffer)
-			if err := mformat.encode(buf, a.Image); err != nil {
+			if err := mformat.codec.Encode(buf, a.Image); err != nil {
 				return err
 			}
 			size := uint32(buf.Len()) + 8

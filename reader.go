@@ -83,7 +83,7 @@ func readICNS(r reader) (*ICNS, error) {
 		sub := r.section(size - 8) // size value includes both uint32 for code and size
 
 		if f, ok := supportedMaskFormats[code]; ok {
-			i, _, err := f.decode(sub, f.res)
+			i, _, err := f.codec.Decode(sub, f.res)
 			if err != nil {
 				continue
 			}
@@ -102,7 +102,7 @@ func readICNS(r reader) (*ICNS, error) {
 		}
 
 		if f, ok := supportedImageFormats[code]; ok {
-			i, enc, err := f.decode(sub, f.res)
+			i, enc, err := f.codec.Decode(sub, f.res)
 			if err != nil {
 				continue
 			}
