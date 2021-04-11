@@ -26,6 +26,7 @@ import (
 type imageCodec struct{}
 
 func (c *imageCodec) Encode(w io.Writer, img image.Image) error {
+	// Unconditionally encode as PNG.
 	return png.Encode(w, img)
 }
 
