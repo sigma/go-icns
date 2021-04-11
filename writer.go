@@ -16,23 +16,11 @@ package icns
 
 import (
 	"bytes"
-	"encoding/binary"
 	"io"
 
-	"github.com/sigma/go-icns/internal/codec"
+	"github.com/sigma/go-icns/internal/binary"
+	"github.com/sigma/go-icns/internal/utils"
 )
-
-type writer []byte
-
-func (w *writer) uint32(v uint32) {
-	binary.BigEndian.PutUint32(*w, v)
-	*w = (*w)[4:]
-}
-
-func (w *writer) section(body []byte) {
-	copy((*w), body)
-	*w = (*w)[len(body):]
-}
 
 // Encode writes a .icns file to the provided writer.
 func Encode(w io.Writer, i *ICNS) error {
@@ -50,7 +38,7 @@ func Encode(w io.Writer, i *ICNS) error {
 		// encode mask first
 		if a.format.combineCode != 0 {
 			// the encoders expect an NRGBA instance
-			a.Image = codec.Img2NRGBA(a.Image)
+			a.Image = utils.Img2NRGBA(a.Image)
 
 			// encode alpha channel as separated mask
 			mformat := supportedMaskFormats[a.format.combineCode]
@@ -77,14 +65,14 @@ func Encode(w io.Writer, i *ICNS) error {
 	}
 
 	data := make([]byte, totalSize)
-	wd := writer(data)
-	wd.uint32(magic)
-	wd.uint32(totalSize)
+	wd := binary.Writer(data)
+	wd.Uint32(magic)
+	wd.Uint32(totalSize)
 
 	for idx := range buffers {
-		wd.uint32(types[idx])
-		wd.uint32(sizes[idx])
-		wd.section(buffers[idx].Bytes())
+		wd.Uint32(types[idx])
+		wd.Uint32(sizes[idx])
+		wd.Section(buffers[idx].Bytes())
 	}
 
 	_, err := w.Write(data)

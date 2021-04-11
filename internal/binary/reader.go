@@ -12,26 +12,39 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package codec
+package binary
 
 import (
-	"image"
-	"image/draw"
+	"encoding/binary"
+	"io"
+
+	"github.com/sigma/go-icns/internal/utils"
 )
 
-func Img2NRGBA(img image.Image) *image.NRGBA {
-	r := img.Bounds()
-	res := image.NewNRGBA(r)
-	draw.Draw(res, r, img, image.Point{}, draw.Over)
-	return res
+type Reader []byte
+
+func (r *Reader) Uint32() uint32 {
+	v := binary.BigEndian.Uint32(*r)
+	*r = (*r)[4:]
+	return v
 }
 
-func nrgbaChannel(img *image.NRGBA, c int) []byte {
-	size := len(img.Pix) / 4
-	res := make([]byte, size)
+func (r *Reader) Section(n int) *Reader {
+	r2 := (*r)[:n]
+	*r = (*r)[n:]
+	return &r2
+}
 
-	for idx := range res {
-		res[idx] = img.Pix[idx*4+c]
+func (r *Reader) Read(p []byte) (int, error) {
+	var err error
+	nr := len(*r)
+	n := utils.Min(nr, len(p))
+	if n == nr {
+		err = io.EOF
 	}
-	return res
+	s := r.Section(n)
+	for i := 0; i < n; i++ {
+		p[i] = (*s)[i]
+	}
+	return n, err
 }

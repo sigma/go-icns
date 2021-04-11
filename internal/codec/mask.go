@@ -18,17 +18,19 @@ import (
 	"image"
 	"io"
 	"io/ioutil"
+
+	"github.com/sigma/go-icns/internal/utils"
 )
 
 type maskCodec struct{}
 
 func (c *maskCodec) Encode(w io.Writer, img image.Image) error {
 	if nrgba, ok := img.(*image.NRGBA); ok {
-		alpha := nrgbaChannel(nrgba, 3)
+		alpha := utils.NRGBAChannel(nrgba, 3)
 		w.Write(alpha)
 		return nil
 	}
-	return c.Encode(w, Img2NRGBA(img))
+	return c.Encode(w, utils.Img2NRGBA(img))
 }
 
 func (c *maskCodec) Decode(r io.Reader, res Resolution) (image.Image, string, error) {

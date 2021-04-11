@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 
 	"github.com/sigma/go-icns/internal/rle"
+	"github.com/sigma/go-icns/internal/utils"
 )
 
 type packCodec struct{}
@@ -27,12 +28,12 @@ type packCodec struct{}
 func (c *packCodec) Encode(w io.Writer, img image.Image) error {
 	if nrgba, ok := img.(*image.NRGBA); ok {
 		for i := 0; i < 3; i++ {
-			c := nrgbaChannel(nrgba, i)
+			c := utils.NRGBAChannel(nrgba, i)
 			w.Write(rle.Encode(c))
 		}
 		return nil
 	}
-	return c.Encode(w, Img2NRGBA(img))
+	return c.Encode(w, utils.Img2NRGBA(img))
 }
 
 func (c *packCodec) Decode(r io.Reader, res Resolution) (image.Image, string, error) {

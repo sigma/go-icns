@@ -27,6 +27,8 @@
 // if a longer non-repetitive pattern is seen.
 package rle
 
+import "github.com/sigma/go-icns/internal/utils"
+
 type byteRec struct {
 	b byte
 	n int
@@ -95,7 +97,7 @@ func Encode(b []byte) []byte {
 			for r.n > 0 {
 				// because we only compress sequences of 3+ characters
 				// we encode repetitions of 3 to 130 as 0x80 to 0xff
-				n := min(r.n, 130)
+				n := utils.Min(r.n, 130)
 				res = append(res, byte(0x80+n-3), r.b)
 				r.n -= n
 			}
@@ -130,11 +132,4 @@ func Decode(p []byte) []byte {
 		}
 	}
 	return res
-}
-
-func min(i, j int) int {
-	if i < j {
-		return i
-	}
-	return j
 }

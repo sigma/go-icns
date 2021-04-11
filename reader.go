@@ -15,56 +15,22 @@
 package icns
 
 import (
-	"encoding/binary"
 	"fmt"
 	"image"
 	"image/draw"
 	"io"
 	"io/ioutil"
+
+	"github.com/sigma/go-icns/internal/binary"
 )
 
-type reader []byte
-
-func (r *reader) uint32() uint32 {
-	v := binary.BigEndian.Uint32(*r)
-	*r = (*r)[4:]
-	return v
-}
-
-func (r *reader) section(n int) *reader {
-	r2 := (*r)[:n]
-	*r = (*r)[n:]
-	return &r2
-}
-
-func min(i, j int) int {
-	if i < j {
-		return i
-	}
-	return j
-}
-
-func (r *reader) Read(p []byte) (int, error) {
-	var err error
-	nr := len(*r)
-	n := min(nr, len(p))
-	if n == nr {
-		err = io.EOF
-	}
-	s := r.section(n)
-	for i := 0; i < n; i++ {
-		p[i] = (*s)[i]
-	}
-	return n, err
-}
-
-func readICNS(r reader) (*ICNS, error) {
-	hdr := r.uint32()
+func readICNS(r binary.Reader) (*ICNS, error) {
+	hdr := r.Uint32()
 	if hdr != magic {
 		return nil, fmt.Errorf("wrong magic number for ICNS file: %x", hdr)
 	}
 
-	_ = r.uint32() // size
+	_ = r.Uint32() // size
 
 	minCompat := Newest
 	maxCompat := Oldest
@@ -78,9 +44,9 @@ func readICNS(r reader) (*ICNS, error) {
 			break
 		}
 
-		code := r.uint32()
-		size := int(r.uint32())
-		sub := r.section(size - 8) // size value includes both uint32 for code and size
+		code := r.Uint32()
+		size := int(r.Uint32())
+		sub := r.Section(size - 8) // size value includes both uint32 for code and size
 
 		if f, ok := supportedMaskFormats[code]; ok {
 			i, _, err := f.codec.Decode(sub, f.res)

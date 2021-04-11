@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 
 	"github.com/sigma/go-icns/internal/rle"
+	"github.com/sigma/go-icns/internal/utils"
 )
 
 type argbCodec struct {
@@ -29,13 +30,13 @@ type argbCodec struct {
 func (c *argbCodec) Encode(w io.Writer, img image.Image) error {
 	if nrgba, ok := img.(*image.NRGBA); ok {
 		w.Write([]byte(c.header))
-		w.Write(rle.Encode(nrgbaChannel(nrgba, 3)))
+		w.Write(rle.Encode(utils.NRGBAChannel(nrgba, 3)))
 		for i := 0; i < 3; i++ {
-			w.Write(rle.Encode(nrgbaChannel(nrgba, i)))
+			w.Write(rle.Encode(utils.NRGBAChannel(nrgba, i)))
 		}
 		return nil
 	}
-	return c.Encode(w, Img2NRGBA(img))
+	return c.Encode(w, utils.Img2NRGBA(img))
 }
 
 func (c *argbCodec) Decode(r io.Reader, res Resolution) (image.Image, string, error) {
