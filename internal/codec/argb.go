@@ -22,9 +22,9 @@ import (
 	"github.com/sigma/go-icns/internal/rle"
 )
 
-type ARGBCodec struct{}
+type argbCodec struct{}
 
-func (c *ARGBCodec) Encode(w io.Writer, img image.Image) error {
+func (c *argbCodec) Encode(w io.Writer, img image.Image) error {
 	if nrgba, ok := img.(*image.NRGBA); ok {
 		w.Write([]byte("ARGB"))
 		w.Write(rle.Encode(nrgbaChannel(nrgba, 3)))
@@ -36,7 +36,7 @@ func (c *ARGBCodec) Encode(w io.Writer, img image.Image) error {
 	return c.Encode(w, Img2NRGBA(img))
 }
 
-func (c *ARGBCodec) Decode(r io.Reader, res Resolution) (image.Image, string, error) {
+func (c *argbCodec) Decode(r io.Reader, res Resolution) (image.Image, string, error) {
 	body, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, "", err
@@ -61,3 +61,5 @@ func (c *ARGBCodec) Decode(r io.Reader, res Resolution) (image.Image, string, er
 	}
 	return img, "argb", nil
 }
+
+var ARGBCodec = &argbCodec{}

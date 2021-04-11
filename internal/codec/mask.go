@@ -20,9 +20,9 @@ import (
 	"io/ioutil"
 )
 
-type MaskCodec struct{}
+type maskCodec struct{}
 
-func (c *MaskCodec) Encode(w io.Writer, img image.Image) error {
+func (c *maskCodec) Encode(w io.Writer, img image.Image) error {
 	if nrgba, ok := img.(*image.NRGBA); ok {
 		alpha := nrgbaChannel(nrgba, 3)
 		w.Write(alpha)
@@ -31,7 +31,7 @@ func (c *MaskCodec) Encode(w io.Writer, img image.Image) error {
 	return c.Encode(w, Img2NRGBA(img))
 }
 
-func (c *MaskCodec) Decode(r io.Reader, res Resolution) (image.Image, string, error) {
+func (c *maskCodec) Decode(r io.Reader, res Resolution) (image.Image, string, error) {
 	body, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, "", err
@@ -45,3 +45,5 @@ func (c *MaskCodec) Decode(r io.Reader, res Resolution) (image.Image, string, er
 	}
 	return img, "mask", nil
 }
+
+var MaskCodec = &maskCodec{}

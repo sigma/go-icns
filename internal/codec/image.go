@@ -23,13 +23,13 @@ import (
 	"io/ioutil"
 )
 
-type ImageCodec struct{}
+type imageCodec struct{}
 
-func (c *ImageCodec) Encode(w io.Writer, img image.Image) error {
+func (c *imageCodec) Encode(w io.Writer, img image.Image) error {
 	return png.Encode(w, img)
 }
 
-func (c *ImageCodec) Decode(r io.Reader, _ Resolution) (image.Image, string, error) {
+func (c *imageCodec) Decode(r io.Reader, _ Resolution) (image.Image, string, error) {
 	// we might have to re-read.
 	data, err := ioutil.ReadAll(r)
 	if err != nil {
@@ -46,3 +46,5 @@ func (c *ImageCodec) Decode(r io.Reader, _ Resolution) (image.Image, string, err
 	}
 	return img, "png", nil
 }
+
+var ImageCodec = &imageCodec{}

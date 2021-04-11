@@ -22,9 +22,9 @@ import (
 	"github.com/sigma/go-icns/internal/rle"
 )
 
-type PackCodec struct{}
+type packCodec struct{}
 
-func (c *PackCodec) Encode(w io.Writer, img image.Image) error {
+func (c *packCodec) Encode(w io.Writer, img image.Image) error {
 	if nrgba, ok := img.(*image.NRGBA); ok {
 		for i := 0; i < 3; i++ {
 			c := nrgbaChannel(nrgba, i)
@@ -35,7 +35,7 @@ func (c *PackCodec) Encode(w io.Writer, img image.Image) error {
 	return c.Encode(w, Img2NRGBA(img))
 }
 
-func (c *PackCodec) Decode(r io.Reader, res Resolution) (image.Image, string, error) {
+func (c *packCodec) Decode(r io.Reader, res Resolution) (image.Image, string, error) {
 	body, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, "", err
@@ -60,3 +60,5 @@ func (c *PackCodec) Decode(r io.Reader, res Resolution) (image.Image, string, er
 	}
 	return img, "icon", nil
 }
+
+var PackCodec = &packCodec{}

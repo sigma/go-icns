@@ -129,7 +129,7 @@ func init() {
 			combineCode: f.mask,
 			res:         f.res,
 			compat:      Allegro,
-			codec:       &codec.PackCodec{},
+			codec:       codec.PackCodec,
 		}
 
 		supportedMaskFormats[f.mask] = &format{
@@ -137,7 +137,7 @@ func init() {
 			combineCode: f.code,
 			res:         f.res,
 			compat:      Allegro,
-			codec:       &codec.MaskCodec{},
+			codec:       codec.MaskCodec,
 		}
 	}
 
@@ -154,7 +154,7 @@ func init() {
 			code:   f.code,
 			res:    f.res,
 			compat: Cheetah, // not quite sure
-			codec:  &codec.ARGBCodec{},
+			codec:  codec.ARGBCodec,
 		}
 	}
 
@@ -181,7 +181,7 @@ func init() {
 			code:   f.code,
 			res:    f.res,
 			compat: f.compat,
-			codec:  &codec.ImageCodec{},
+			codec:  codec.ImageCodec,
 		}
 	}
 
