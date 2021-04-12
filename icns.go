@@ -76,14 +76,13 @@ func (i *ICNS) ByResolution(r Resolution) (image.Image, error) {
 	return nil, fmt.Errorf("no image by that resolution")
 }
 
-// HighestResolution extracts the image from the icon that has the highest resolution.
-func (i *ICNS) HighestResolution() (image.Image, error) {
+func (i *ICNS) highestResolutionAsset() (*img, error) {
 	var res Resolution
-	var img image.Image
+	var img *img
 	for _, a := range i.assets {
 		if a.format.res > res {
 			res = a.format.res
-			img = a.Image
+			img = a
 		}
 	}
 
@@ -91,6 +90,16 @@ func (i *ICNS) HighestResolution() (image.Image, error) {
 		return nil, fmt.Errorf("no valid image")
 	}
 	return img, nil
+}
+
+// HighestResolution extracts the image from the icon that has the highest resolution.
+func (i *ICNS) HighestResolution() (image.Image, error) {
+	img, err := i.highestResolutionAsset()
+	if err != nil {
+		return nil, err
+	}
+
+	return img.Image, nil
 }
 
 // Add adds new image to the icon, assuming its resolution is acceptable.

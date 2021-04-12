@@ -34,6 +34,7 @@ func testdataFileReader(t *testing.T, fname string) *bytes.Buffer {
 }
 
 func TestDecode(t *testing.T) {
+	t.Parallel()
 	img, fmt, err := image.Decode(testdataFileReader(t, "mit.icns"))
 	if err != nil {
 		t.Fatal(err)
@@ -50,6 +51,7 @@ func TestDecode(t *testing.T) {
 }
 
 func TestDecodeConfig(t *testing.T) {
+	t.Parallel()
 	cfg, fmt, err := image.DecodeConfig(testdataFileReader(t, "mit.icns"))
 	if err != nil {
 		t.Fatal(err)

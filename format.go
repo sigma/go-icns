@@ -16,7 +16,9 @@ package icns
 
 import (
 	"image"
+	"image/color"
 	"io"
+	"io/ioutil"
 
 	"github.com/sigma/go-icns/internal/codec"
 )
@@ -121,18 +123,22 @@ func init() {
 			return i.HighestResolution()
 		},
 		func(r io.Reader) (image.Config, error) {
-			i, err := Decode(r)
+			bytes, err := ioutil.ReadAll(r)
 			if err != nil {
 				return image.Config{}, err
 			}
-			img, err := i.HighestResolution()
+			i, err := readICNS(bytes, true)
+			if err != nil {
+				return image.Config{}, err
+			}
+			img, err := i.highestResolutionAsset()
 			if err != nil {
 				return image.Config{}, err
 			}
 			return image.Config{
-				ColorModel: img.ColorModel(),
-				Width:      img.Bounds().Dx(),
-				Height:     img.Bounds().Dy(),
+				ColorModel: color.NRGBAModel,
+				Width:      int(img.format.res),
+				Height:     int(img.format.res),
 			}, nil
 		})
 }

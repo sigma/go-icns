@@ -24,7 +24,7 @@ import (
 	"github.com/sigma/go-icns/internal/binary"
 )
 
-func readICNS(r binary.Reader) (*ICNS, error) {
+func readICNS(r binary.Reader, metaOnly bool) (*ICNS, error) {
 	hdr := r.Uint32()
 	if hdr != magic {
 		return nil, fmt.Errorf("wrong magic number for ICNS file: %x", hdr)
@@ -49,6 +49,10 @@ func readICNS(r binary.Reader) (*ICNS, error) {
 		sub := r.Section(size - 8) // size value includes both uint32 for code and size
 
 		if f, ok := supportedMaskFormats[code]; ok {
+			if metaOnly {
+				continue
+			}
+
 			i, _, err := f.codec.Decode(sub, f.res)
 			if err != nil {
 				continue
@@ -68,10 +72,31 @@ func readICNS(r binary.Reader) (*ICNS, error) {
 		}
 
 		if f, ok := supportedImageFormats[code]; ok {
-			i, enc, err := f.codec.Decode(sub, f.res)
-			if err != nil {
-				continue
+			asset := &img{
+				format: f,
 			}
+
+			if !metaOnly {
+				i, enc, err := f.codec.Decode(sub, f.res)
+				if err != nil {
+					continue
+				}
+
+				// TODO: don't assume the mask is parsed first
+				if m := masks[f.combineCode]; m != nil {
+					r := image.Rect(0, 0, int(f.res), int(f.res))
+
+					c := image.NewRGBA(r)
+
+					draw.DrawMask(c, r, i, image.Pt(0, 0), m, image.Pt(0, 0), draw.Over)
+					i = c
+				}
+
+				asset.Image = i
+				asset.encoder = enc
+			}
+
+			assets = append(assets, asset)
 
 			if f.compat < minCompat {
 				minCompat = f.compat
@@ -80,22 +105,6 @@ func readICNS(r binary.Reader) (*ICNS, error) {
 			if f.compat > maxCompat {
 				maxCompat = f.compat
 			}
-
-			// TODO: don't assume the mask is parsed first
-			if m := masks[f.combineCode]; m != nil {
-				r := image.Rect(0, 0, int(f.res), int(f.res))
-
-				c := image.NewRGBA(r)
-
-				draw.DrawMask(c, r, i, image.Pt(0, 0), m, image.Pt(0, 0), draw.Over)
-				i = c
-			}
-
-			assets = append(assets, &img{
-				Image:   i,
-				format:  f,
-				encoder: enc,
-			})
 
 			continue
 		}
@@ -117,5 +126,5 @@ func Decode(r io.Reader) (*ICNS, error) {
 	if err != nil {
 		return nil, err
 	}
-	return readICNS(bytes)
+	return readICNS(bytes, false)
 }
