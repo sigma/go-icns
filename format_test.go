@@ -17,12 +17,18 @@ package icns
 import (
 	"bytes"
 	"image"
+	"io"
 	"io/ioutil"
 	"path"
 	"testing"
 )
 
-func testdataFileReader(t *testing.T, fname string) *bytes.Buffer {
+type test interface {
+	Helper()
+	Fatal(args ...interface{})
+}
+
+func testdataFileReader(t test, fname string) *bytes.Reader {
 	t.Helper()
 
 	body, err := ioutil.ReadFile(path.Join("testdata", fname))
@@ -30,7 +36,7 @@ func testdataFileReader(t *testing.T, fname string) *bytes.Buffer {
 		t.Fatal(err)
 	}
 
-	return bytes.NewBuffer(body)
+	return bytes.NewReader(body)
 }
 
 func TestDecode(t *testing.T) {
@@ -63,5 +69,19 @@ func TestDecodeConfig(t *testing.T) {
 
 	if cfg.Width != 1024 || cfg.Height != 1024 {
 		t.Errorf("unexpected image size: got %dx%d, want 1024x1024", cfg.Width, cfg.Height)
+	}
+}
+
+func BenchmarkDecodeConfig(b *testing.B) {
+	r := testdataFileReader(b, "mit.icns")
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		r.Seek(0, io.SeekStart)
+		_, _, err := image.DecodeConfig(r)
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }
