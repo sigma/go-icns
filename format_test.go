@@ -78,9 +78,10 @@ func BenchmarkDecodeConfig(b *testing.B) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		r.Seek(0, io.SeekStart)
-		_, _, err := image.DecodeConfig(r)
-		if err != nil {
+		if _, err := r.Seek(0, io.SeekStart); err != nil {
+			b.Fatal(err)
+		}
+		if _, _, err := image.DecodeConfig(r); err != nil {
 			b.Fatal(err)
 		}
 	}

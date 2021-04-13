@@ -29,10 +29,16 @@ type argbCodec struct {
 
 func (c *argbCodec) Encode(w io.Writer, img image.Image) error {
 	if nrgba, ok := img.(*image.NRGBA); ok {
-		w.Write([]byte(c.header))
-		w.Write(rle.Encode(utils.NRGBAChannel(nrgba, 3)))
+		if _, err := w.Write([]byte(c.header)); err != nil {
+			return err
+		}
+		if _, err := w.Write(rle.Encode(utils.NRGBAChannel(nrgba, 3))); err != nil {
+			return err
+		}
 		for i := 0; i < 3; i++ {
-			w.Write(rle.Encode(utils.NRGBAChannel(nrgba, i)))
+			if _, err := w.Write(rle.Encode(utils.NRGBAChannel(nrgba, i))); err != nil {
+				return err
+			}
 		}
 		return nil
 	}

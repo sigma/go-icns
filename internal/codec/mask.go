@@ -27,7 +27,9 @@ type maskCodec struct{}
 func (c *maskCodec) Encode(w io.Writer, img image.Image) error {
 	if nrgba, ok := img.(*image.NRGBA); ok {
 		alpha := utils.NRGBAChannel(nrgba, 3)
-		w.Write(alpha)
+		if _, err := w.Write(alpha); err != nil {
+			return err
+		}
 		return nil
 	}
 	return c.Encode(w, utils.Img2NRGBA(img))

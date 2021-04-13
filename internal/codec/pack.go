@@ -29,7 +29,9 @@ func (c *packCodec) Encode(w io.Writer, img image.Image) error {
 	if nrgba, ok := img.(*image.NRGBA); ok {
 		for i := 0; i < 3; i++ {
 			c := utils.NRGBAChannel(nrgba, i)
-			w.Write(rle.Encode(c))
+			if _, err := w.Write(rle.Encode(c)); err != nil {
+				return err
+			}
 		}
 		return nil
 	}
