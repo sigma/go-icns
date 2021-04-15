@@ -16,6 +16,8 @@ jobs:
       - uses: actions/setup-go@v2
       - name: Run golangci-lint
         uses: actions-contrib/golangci-lint@v1
+      - name: Check copyright
+        uses: sigma/addlicense@master
       - name: Run build
         run: go build ./...
       - name: Run testing
