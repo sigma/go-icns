@@ -18,8 +18,8 @@ import (
 	"bytes"
 	"io"
 
-	"github.com/sigma/go-icns/internal/binary"
-	"github.com/sigma/go-icns/internal/utils"
+	"yrh.dev/icns/internal/binary"
+	"yrh.dev/icns/internal/utils"
 )
 
 // Encode writes a .icns file to the provided writer.

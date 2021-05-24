@@ -21,7 +21,7 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/sigma/go-icns/internal/binary"
+	"yrh.dev/icns/internal/binary"
 )
 
 func readICNS(r binary.Reader, metaOnly bool) (*ICNS, error) {

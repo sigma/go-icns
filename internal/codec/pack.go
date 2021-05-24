@@ -19,8 +19,8 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/sigma/go-icns/internal/rle"
-	"github.com/sigma/go-icns/internal/utils"
+	"yrh.dev/icns/internal/rle"
+	"yrh.dev/icns/internal/utils"
 )
 
 type packCodec struct{}

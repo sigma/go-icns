@@ -20,7 +20,7 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/sigma/go-icns/internal/codec"
+	"yrh.dev/icns/internal/codec"
 )
 
 type format struct {

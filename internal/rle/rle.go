@@ -27,7 +27,7 @@
 // if a longer non-repetitive pattern is seen.
 package rle
 
-import "github.com/sigma/go-icns/internal/utils"
+import "yrh.dev/icns/internal/utils"
 
 type byteRec struct {
 	b byte

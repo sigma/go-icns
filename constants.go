@@ -14,7 +14,7 @@
 
 package icns
 
-import "github.com/sigma/go-icns/internal/codec"
+import "yrh.dev/icns/internal/codec"
 
 const (
 	magic uint32 = ('i'<<24 | 'c'<<16 | 'n'<<8 | 's')

@@ -1,4 +1,4 @@
-module github.com/sigma/go-icns
+module yrh.dev/icns
 
 go 1.15
 

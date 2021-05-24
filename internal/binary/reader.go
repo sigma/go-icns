@@ -18,7 +18,7 @@ import (
 	"encoding/binary"
 	"io"
 
-	"github.com/sigma/go-icns/internal/utils"
+	"yrh.dev/icns/internal/utils"
 )
 
 type Reader []byte

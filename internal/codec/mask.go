@@ -19,7 +19,7 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/sigma/go-icns/internal/utils"
+	"yrh.dev/icns/internal/utils"
 )
 
 type maskCodec struct{}
